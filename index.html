@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10151C">
+  <meta name="description" content="Follow Running From Responsibilities, a 150 km running challenge in December 2026.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Running From Responsibilities">
+  <meta property="og:description" content="150 km. 31 days. Zero valid excuses. Follow the December 2026 running challenge.">
+  <meta name="twitter:card" content="summary">
+  <title>Running From Responsibilities | December 2026</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./model.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-head shell">
+    <a class="brand" href="./" aria-label="Running From Responsibilities home"><span class="brand-icon" data-icon="bolt"></span><span>RUNNING FROM<br>RESPONSIBILITIES</span></a>
+    <span class="season"><i></i> DECEMBER 2026</span>
+  </header>
+  <aside id="preview" class="preview shell" hidden></aside>
+  <main id="main" class="shell">
+    <noscript><p class="notice">Enable JavaScript to view the live challenge countdown and running dashboard.</p></noscript>
+    <section id="landing" hidden aria-labelledby="landing-title">
+      <div class="landing-hero">
+        <div class="track" aria-hidden="true">
+          <svg viewBox="0 0 860 560" fill="none"><defs><linearGradient id="lane"><stop stop-color="#b9f94b" stop-opacity="0"/><stop offset="1" stop-color="#b9f94b" stop-opacity=".83"/></linearGradient></defs>
+            <g stroke="url(#lane)" stroke-width="1.35">
+              <path d="M0 551C220 549 372 569 501 466S589 205 856 18"/><path d="M63 556C250 548 400 561 529 458S618 208 860 52"/><path d="M121 560C290 549 441 546 561 444S650 215 860 86"/><path d="M200 560C342 546 480 527 596 426S693 211 860 123"/><path d="M280 560C435 535 529 496 631 403S737 210 860 158"/><path d="M366 560C498 528 596 468 669 381S782 205 860 197"/>
+            </g>
+            <path class="track-start" d="m671 215 154 35" stroke="#b9f94b" stroke-width="2" stroke-dasharray="5 6"/>
+            <g fill="#b9f94b" font-size="18" font-family="monospace" opacity=".65"><text x="698" y="209">01</text><text x="747" y="222">02</text><text x="793" y="235">03</text></g>
+          </svg>
+        </div>
+        <p class="eyebrow"><span></span> THE STARTING LINE AWAITS</p>
+        <h1 id="landing-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1>
+        <p class="tagline">150 km. 31 days. Zero valid excuses.</p>
+        <div class="landing-clock">
+          <h2>Countdown to kickoff</h2>
+          <div id="launch-clock" class="clock"></div>
+          <p>The journey begins 1 December 2026.</p>
+        </div>
+        <div class="actions" data-share></div>
+      </div>
+      <div class="brief">
+        <div><span data-icon="target"></span><div><strong>150 <small>km</small></strong><span>Challenge target</span></div></div>
+        <div><span data-icon="calendar"></span><div><strong>31 <small>days</small></strong><span>Challenge duration</span></div></div>
+        <div><span data-icon="activity"></span><div><strong>4.84 <small>km</small></strong><span>Initial daily target</span></div></div>
+      </div>
+    </section>
+    <section id="dashboard" hidden aria-labelledby="dashboard-title">
+      <div class="dash-head"><div><p class="eyebrow"><span></span> 1–31 DECEMBER · SYDNEY</p><h1 id="dashboard-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1><p class="tagline">150 km. 31 days. Zero valid excuses.</p></div><div class="actions" data-share></div></div>
+      <p id="announcement" class="notice" role="status" hidden></p>
+      <div id="dash-clock" class="panel dash-clock"><h2 id="finish-title">Time to the finish</h2><div id="finish-clock" class="clock"></div></div>
+      <div id="data-status" aria-live="polite"></div>
+      <div id="results"></div>
+    </section>
+    <p id="share-status" class="sr-only" role="status"></p>
+  </main>
+  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p><span>AUSTRALIA/SYDNEY</span></footer>
+  <dialog id="day-dialog"><div id="day-details"></div><form method="dialog"><button class="button">Close</button></form></dialog>
+  <div id="confetti" aria-hidden="true"></div>
+</body>
+</html>
