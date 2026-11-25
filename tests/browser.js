@@ -149,6 +149,15 @@ async function main() {
       login.elements.password.value='simulated-only';
       login.requestSubmit();
       await until(() => !doc.getElementById('workspace').hidden);
+      const dave=[...doc.querySelectorAll('#profiles form')].find(form => form.querySelector('h2').textContent==='Dave');
+      const visibility=[...dave.querySelectorAll('select')].find(select => select.options[0].textContent==='Visible');
+      visibility.value='false';
+      visibility.dispatchEvent(new doc.defaultView.Event('change'));
+      await until(() => text(doc,'#status').includes('hidden from the public'));
+      expect(dave.isConnected && dave.elements.state.value==='true' && visibility.value==='false');
+      visibility.value='true';
+      visibility.dispatchEvent(new doc.defaultView.Event('change'));
+      await until(() => text(doc,'#status').includes('visible to the public'));
       const add=doc.getElementById('add');
       add.elements.name.value='Steve';
       add.requestSubmit();

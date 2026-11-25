@@ -3,7 +3,7 @@
   Date.now=() => Date.parse('2026-12-01T01:00:00+11:00');
   globalThis.RunningSupabaseConfig={url:'https://test.supabase.co',publishableKey:'sb_publishable_fake'};
   const profiles=[['dave','Dave','#B9F94B'],['kate','Kate','#D59BFF'],['ada','Ada','#93C5FD']]
-    .map(([participant,display_name,accent])=>({participant,display_name,accent,goal_km:100,active:true,display_order:10,runs:[]}));
+    .map(([participant,display_name,accent])=>({participant,display_name,accent,goal_km:100,active:true,visible:true,display_order:10,runs:[]}));
   const nativeFetch=window.fetch;
   window.fetch=(url,options) => {
     if (url!=='https://test.supabase.co/functions/v1/challenge') return nativeFetch(url,options);
@@ -34,7 +34,15 @@
   };
   const success=data=>({data,error:null});
   globalThis.supabase={createClient:()=>({
-    rpc:async () => mock.offline ? {error:{code:'network'}} : success(profiles),
+    rpc:async (name,args) => {
+      if (mock.offline) return {error:{code:'network'}};
+      if (name === 'rfr_set_visibility') {
+        const profile=profiles.find(row => row.participant === args.runner_id);
+        if (profile) profile.visible=args.is_visible;
+        return success(Boolean(profile));
+      }
+      return success(profiles.filter(profile => profile.visible));
+    },
     auth:{
       getSession:async () => success({session:mock.admin ? {access_token:mock.admin} : null}),
       signInWithPassword:async () => { mock.admin='admin'; return success({}); },

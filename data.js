@@ -107,6 +107,7 @@
       signIn:(email,password) => unwrap(db.auth.signInWithPassword({email,password})),
       signOut:() => unwrap(db.auth.signOut({scope:'local'})),
       session:async () => (await unwrap(db.auth.getSession())).session,
+      setVisibility:(runnerId,visible) => unwrap(db.rpc('rfr_set_visibility',{runner_id:runnerId,is_visible:visible})),
       onAuth:callback => db.auth.onAuthStateChange(() => setTimeout(callback,0)),
       request:async (action,payload) => {
         const session = (await unwrap(db.auth.getSession())).session;

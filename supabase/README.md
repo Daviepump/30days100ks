@@ -21,3 +21,7 @@
 6. Run [check-permissions.sql](check-permissions.sql) in the live project. It rolls its changes back. In separate browser tabs or profiles, test unauthenticated and non-admin rejection, create a disposable third participant, verify the listed styling and ordering, exchange its private link, and add, edit, and delete a disposable run. Confirm the link fragment disappears and revocation invalidates new exchanges and an existing session. Verify the public API omits inactive runners and account details. Deactivate the disposable participant when finished.
 
 Local verification uses simulated browser data and an isolated PostgreSQL instance. Hosted Edge routing, Auth, rate limiting under live ingress and cross-device behavior require the configured project.
+
+## Participant visibility
+
+Run [visibility.sql](visibility.sql) once in the SQL Editor after Stage 3. If your Data API exposes entities individually, expose `rfr_set_visibility` with its SQL grants intact. The administrator portal then shows **Visible / Hidden**. Hiding a runner excludes their profile and runs from public reads and leaves their records and access links in place. Existing participants start visible.

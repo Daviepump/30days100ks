@@ -116,6 +116,33 @@ async function loadProfiles(expected = generation) {
     form.elements.order.value=profile.display_order;
     form.elements.state.value=String(profile.active);
     const identity={participant:profile.participant};
+    const visibility=document.createElement('label');
+    visibility.textContent='Public visibility';
+    const visibilitySelect=document.createElement('select');
+    visibilitySelect.innerHTML='<option value="true">Visible</option><option value="false">Hidden</option>';
+    visibilitySelect.value=String(profile.visible ?? true);
+    visibilitySelect.disabled=typeof profile.visible !== 'boolean';
+    visibility.append(visibilitySelect);
+    form.querySelector('.form-actions').before(visibility);
+    visibilitySelect.onchange=async () => {
+      const visible=visibilitySelect.value==='true';
+      visibilitySelect.value=String(profile.visible);
+      if (busy) return;
+      visibilitySelect.disabled=true;
+      try {
+        await operation(async () => {
+          if (!await api.setVisibility(profile.participant,visible)) {
+            throw Object.assign(new Error('Participant missing'),{code:'conflict'});
+          }
+          profile.visible=visible;
+          visibilitySelect.value=String(visible);
+          RunningData.notify();
+          status(visible ? 'Participant is visible to the public.' : 'Participant is hidden from the public.');
+        });
+      } finally {
+        visibilitySelect.disabled=false;
+      }
+    };
     form.onsubmit=event => {
       event.preventDefault();
       const active=form.elements.state.value==='true';
