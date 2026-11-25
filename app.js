@@ -99,7 +99,20 @@ function renderParticipant(slug, payload, position) {
   if (!section) {
     section = document.createElement('section');
     section.dataset.runner = slug;
-    section.innerHTML = '<h2 class="runner-name"></h2><div class="runner-results"></div>';
+    section.innerHTML = '<div class="panel runner-summary"><h2 class="runner-name"></h2><div class="runner-overview"></div>' +
+      '<button type="button" class="button runner-toggle" aria-expanded="false">View details</button></div>' +
+      '<div class="runner-disclosure" inert><div class="runner-results"></div></div>';
+    const toggle = section.querySelector('.runner-toggle');
+    const disclosure = section.querySelector('.runner-disclosure');
+    disclosure.id = 'runner-details-' + slug;
+    toggle.setAttribute('aria-controls',disclosure.id);
+    toggle.onclick = () => {
+      const open = disclosure.inert;
+      disclosure.inert = !open;
+      toggle.setAttribute('aria-expanded',String(open));
+      toggle.textContent = open ? 'Hide details' : 'View details';
+      toggle.setAttribute('aria-label',toggle.textContent + ' for ' + section.querySelector('.runner-name').textContent);
+    };
   }
   const root = section.querySelector('.runner-results');
   const signature = JSON.stringify([today,payload]);
@@ -107,19 +120,18 @@ function renderParticipant(slug, payload, position) {
   if (previous.get(slug) === signature) return;
   section.style.setProperty('--accent',payload.accent);
   section.querySelector('.runner-name').textContent = payload.name;
+  section.querySelector('.runner-toggle').setAttribute('aria-label',
+    section.querySelector('.runner-toggle').textContent + ' for ' + payload.name);
   previous.set(slug,signature);
   const r = M.stats(payload.runs,today,payload.goalKm);
   const complete = r.remaining === 0;
   const tiles = [
-    ['Distance completed',km(r.total),'activity'],['Distance remaining',km(r.remaining),'target'],['Days remaining',r.days,'calendar','Scheduled days · Christmas excluded'],
-    ['Required daily average',r.required == null ? '—' : km(r.required) + '/day','flag'],
     ['Longest run',r.visible.length ? km(r.longest) : '—','mountain'],['Runs recorded',r.visible.length,'activity'],
     ['Average pace',pace(r.pace),'time','Runs with recorded durations'],['Total running time',duration(r.time),'time','Recorded durations'],
     ['Average distance',r.visible.length ? km(r.total/r.visible.length) : '—','target'],['Active days',r.active,'calendar'],
     ['Current streak',r.current + ' days','bolt'],['Longest streak',r.longestStreak + ' days','trophy']
   ];
   const cap = Math.min(100,r.percent);
-  const numbers = r.delta > .005 ? km(r.delta) + ' ahead of expected progress' : r.delta < -.005 ? km(-r.delta) + ' behind expected progress' : 'On the expected distance';
   const calendar = M.dates.map((date,i) => {
     const distance = r.daily[i];
     const rest = date === M.restDay;
@@ -131,21 +143,21 @@ function renderParticipant(slug, payload, position) {
       '</small></button>' : '<div class="' + className + '"' + current + '>' + content + (date <= today ? '<small>0 km</small>' : '') + '</div>';
   }).join('');
   const last = payload.lastUpdated ? new Intl.DateTimeFormat('en-AU',{timeZone:M.config.timezone,dateStyle:'medium',timeStyle:'short'}).format(new Date(payload.lastUpdated)) + ' Sydney time' : 'No updates recorded';
-  root.innerHTML = (complete ? '<div class="panel trophy">' + icon('trophy') + 'RESPONSIBILITIES SUCCESSFULLY AVOIDED!</div>' : '') +
-    '<div class="hero-grid"><section class="panel ring-panel"><h2>Challenge progress</h2><div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true">' +
+  section.querySelector('.runner-overview').innerHTML =
+    '<div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true">' +
     '<circle class="ring-track" cx="60" cy="60" r="51"/>' + (cap > 0 ? '<circle class="ring-value" cx="60" cy="60" r="51" pathLength="100" stroke-dasharray="100" stroke-dashoffset="' + (100-cap) + '"/>' : '') +
-    '</svg><div class="ring-text"><strong>' + fmt(r.total) + ' km</strong><span>of ' + km(r.goalKm) + '</span><b>' + fmt(r.percent,1) + '% complete</b></div></div></section>' +
-    '<section class="panel pace-panel"><h2>Challenge pace</h2><p class="status' + (r.delta < -.005 && !complete ? ' behind' : '') + '">' + r.status +
-    '</p><p>' + numbers + '</p><div class="comparison" aria-hidden="true"><div style="width:' + cap + '%"></div><i style="left:' +
-    (r.expected / r.goalKm * 100) + '%"></i></div><div class="legend"><span>Actual · ' + km(r.total) +
-    '</span><span style="--key:white">Expected · ' + km(r.expected) + '</span></div><p class="muted">Expected distance is measured at the start of each Sydney day.</p></section></div>' +
-    '<h2 class="section-title">Running statistics</h2><div class="stat-grid">' + tiles.map(([label,value,symbol,note]) => '<div class="panel stat">' +
+    '</svg><div class="ring-text"><strong>' + fmt(r.total) + ' km</strong><span>of ' + km(r.goalKm) + '</span></div></div>' +
+    '<dl class="runner-metrics"><div><dt>Remaining</dt><dd>' + km(r.remaining) + '</dd></div>' +
+    '<div><dt>Required daily average</dt><dd>' + (r.required == null ? '—' : km(r.required) + '/day') + '</dd></div></dl>' +
+    '<p class="runner-status' + (r.delta < -.005 && !complete && phase === 'active' ? ' behind' : '') + '">' + r.status + '</p>';
+  root.innerHTML = (complete ? '<div class="panel trophy">' + icon('trophy') + 'RESPONSIBILITIES SUCCESSFULLY AVOIDED!</div>' : '') +
+    '<h3 class="section-title">Running statistics</h3><div class="stat-grid">' + tiles.map(([label,value,symbol,note]) => '<div class="panel stat">' +
       icon(symbol) + '<strong>' + value + '</strong><span>' + label + '</span>' + (note ? '<small>' + note + '</small>' : '') + '</div>').join('') +
-    '</div><h2 class="section-title">Activity charts</h2><div class="chart-grid">' + chart(r,today,false) + chart(r,today,true) +
+    '</div><div class="chart-grid">' + chart(r,today,false) + chart(r,today,true) +
     '</div><h2 class="section-title">Achievements</h2><div class="badge-grid">' + M.milestones.map((label,i) => '<div class="panel badge' +
       (r.milestones[i] ? ' unlocked' : '') + '">' + icon(r.milestones[i] ? (i === M.milestones.length - 1 ? 'trophy' : 'flag') : 'lock') + '<div><strong>' + label + '</strong><small>' +
       (i+1)*25 + ' km · ' + (r.milestones[i] ? dLabel(r.milestones[i]) : 'Locked') + '</small></div></div>').join('') +
-    '</div><h2 class="section-title">December activity</h2><div class="details-grid"><section class="panel"><h2>December 2026</h2><p class="muted">Select a running day for details.</p>' +
+    '</div><div class="details-grid"><section class="panel"><h2>December activity</h2>' +
     '<div class="week">' + ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day => '<span>' + day + '</span>').join('') +
     '</div><div class="calendar"><span></span>' + calendar + '</div></section><section class="panel"><h2>Recent runs</h2>' + activities(r.visible) +
     '</section></div><p class="updated">Last data update · ' + last + '</p>';
@@ -234,6 +246,10 @@ function tick() {
   const nextDay = M.sydneyDay(instant);
   const dayChanged = today !== nextDay;
   today = nextDay;
+  if (dayChanged) {
+    const remaining = M.scheduled.filter(date => date >= today).length;
+    $('scheduled-days').textContent = remaining + ' scheduled running ' + (remaining === 1 ? 'day' : 'days') + ' remaining';
+  }
   if (nextPhase !== phase) {
     const launched = phase === 'pre' && nextPhase === 'active';
     $('landing').hidden = nextPhase !== 'pre';

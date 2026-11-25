@@ -1007,6 +1007,22 @@ dialog form{
   gap:clamp(12px,2vw,24px);
 }
 .runner-grid > section { min-width:0; }
+.dash-clock .scheduled-days { margin:4px 0 0; font-size:.9rem; }
+.runner-summary { text-align:center; padding:14px; }
+.runner-summary .runner-name { margin:0; font-size:1.4rem; }
+.runner-summary .ring { margin:6px auto; width:min(100%,252px); }
+.runner-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0; }
+.runner-metrics dt { color:var(--muted); font-size:.8rem; }
+.runner-metrics dd { margin:4px 0 0; font-weight:800; }
+.runner-status { color:var(--accent); font-weight:750; margin:10px 0; }
+.runner-status.behind { color:var(--warn); }
+.runner-toggle { width:100%; }
+.runner-disclosure { display:grid; grid-template-rows:1fr; transition:grid-template-rows .28s ease; }
+.runner-disclosure[inert] { grid-template-rows:0fr; }
+.runner-disclosure > .runner-results { min-height:0; overflow:hidden; }
+.runner-results > :is(.chart-grid,.details-grid,.trophy) { margin-top:12px; }
+.runner-results .section-title { margin-top:14px; }
+@media (prefers-reduced-motion:reduce) { .runner-disclosure { transition:none; } }
 .runner-name { margin:12px 0; font-size:1.8rem; }
 .runner-grid .hero-grid,.runner-grid .chart-grid,.runner-grid .details-grid { grid-template-columns:1fr; }
 .runner-grid .stat-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }

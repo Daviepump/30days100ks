@@ -85,6 +85,18 @@ async function main() {
       expect(doc.documentElement.scrollWidth <= width,'Unexpected horizontal overflow');
       expect(cards.every(card => text(card,'.ring-text').includes('of 100 km') && card.querySelector('.rest-day svg')));
       expect(cards[0].querySelector('.runner-name').textContent==='Dave');
+      expect(doc.querySelectorAll('#scheduled-days').length===1);
+      expect(text(doc,'#scheduled-days').includes('scheduled running days remaining'));
+      const [first,second]=cards.map(card=>card.querySelector('.runner-toggle'));
+      expect(first.getAttribute('aria-expanded')==='false' && second.getAttribute('aria-expanded')==='false');
+      const details=doc.getElementById(first.getAttribute('aria-controls'));
+      expect(details.inert && details.getBoundingClientRect().height===0);
+      first.click();
+      expect(!details.inert && first.getAttribute('aria-expanded')==='true');
+      expect(second.getAttribute('aria-expanded')==='false');
+      expect(details.querySelector('.calendar') && details.querySelector('.chart-grid'));
+      first.click();
+      expect(details.inert && first.getAttribute('aria-expanded')==='false');
       const a=cards[0].getBoundingClientRect(), b=cards[1].getBoundingClientRect();
       expect(width===320 ? a.bottom<b.top : a.right<b.left);
     }));
