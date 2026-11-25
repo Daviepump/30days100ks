@@ -1,36 +1,19 @@
-# Running From Responsibilities
+# 30 Days. 100 Ks.
 
-**31 days. 100 km each. Zero valid excuses.**
+**Running From Responsibilities**
 
-Dave and Kate each have a 100 km challenge from 1–31 December 2026 in Australia/Sydney. The public site switches from countdown to dashboards at the start of 1 December and keeps the final results after December. Open tabs update on their next runnable tick, including when a suspended tab becomes visible.
+100 km. Zero valid excuses. One Christmas break.
 
-## Local preview
+The challenge runs from 1–31 December 2026 in Australia/Sydney. The countdown becomes individual dashboards at midnight on 1 December in Sydney. Christmas Day is a scheduled rest day. It does not break a streak, and optional Christmas runs still count. The initial pace for a 100 km target is 3.33 km per scheduled running day.
 
-From this workspace, start the Windows preview server:
+## Preview and deployment
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\preview.ps1
-```
+Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\preview.ps1` from the project root. Open the [three-runner preview](http://localhost:8765/?preview=example), [countdown](http://localhost:8765/?preview=pre), [ten-second launch preview](http://localhost:8765/?preview=launch), or [local test suite](http://localhost:8765/tests/browser.html). Preview data is simulated. The [administrator portal](http://localhost:8765/admin/) and private logging need Supabase configuration.
 
-Open [the site](http://localhost:8765/). Any static HTTP server serving the repository root also works. Preview scenarios use local simulated runs and require no Supabase configuration.
+After owner approval, push `main` to `https://github.com/Daviepump/30days100ks.git`. In **Settings → Pages**, configure **Deploy from a branch**, `main`, and `/(root)`. The expected URL is `https://daviepump.github.io/30days100ks/`. Use that deployed site when generating production links. [GitHub Pages publishing documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
 
-- [Countdown](http://localhost:8765/?preview=pre) and [launch after ten seconds](http://localhost:8765/?preview=launch)
-- [Zero runs](http://localhost:8765/?preview=zero) and [example dashboards](http://localhost:8765/?preview=example)
-- [Ahead](http://localhost:8765/?preview=ahead), [behind](http://localhost:8765/?preview=behind), and [milestones](http://localhost:8765/?preview=milestones)
-- [Completion](http://localhost:8765/?preview=complete) and [final results](http://localhost:8765/?preview=final)
+## Management
 
-The private run logs are at [Dave’s run log](http://localhost:8765/dave/log/) and [Kate’s run log](http://localhost:8765/kate/log/). Follow [the Supabase setup guide](supabase/README.md) to connect them. Log submissions, edits, and deletions take effect in open dashboards within 15 seconds in visible tabs and sooner in other tabs of the same browser. The site also checks when a visitor returns to their tab.
+[Supabase setup and testing](supabase/README.md) · [Run logging](UPDATE_RUNS.md) · [Codex Cloud API](supabase/CODEX_CLOUD.md)
 
-Remaining days include today while December is active. Expected progress measures distance due at the start of each Sydney day. Each cumulative chart shows the goal pace at the end of each day. A streak carries from yesterday until today closes. Average pace is weighted by distance across timed runs.
-
-## Testing
-
-Open [the local browser suite](http://localhost:8765/tests/browser.html) to verify countdown, layout, calculation, CRUD, duplicate retries, failure recovery, and login flows with a simulated Supabase client. With Node.js 20+, the model checks can also run with `node --test tests/model.test.cjs`.
-
-Live Supabase Auth and real database authorization must be verified separately. See the [Supabase verification checklist](supabase/README.md#verify-the-live-integration).
-
-## GitHub Pages
-
-After the owner approves publication, push the existing `main` branch to the public `running-from-responsibilities` repository. In **Settings → Pages**, set the source to **Deploy from a branch**, select **main** and **/(root)**, then save. Verify the Pages deployment and open the dashboard plus both `log/` routes signed out. The expected project URL is `https://<owner>.github.io/running-from-responsibilities/`. The site uses relative links and `.nojekyll`. [GitHub Pages publishing documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
-
-Once the site is deployed, run data changes through Supabase. See [UPDATE_RUNS.md](UPDATE_RUNS.md) for the current phone workflow and the future Garmin screenshot integration.
+Supabase is the production authority. The public dashboard fetches active runners in configured order and refreshes every 15 seconds while visible. Participants open a private link to record runs. Administrators use a separate Supabase Auth account and private allowlist.

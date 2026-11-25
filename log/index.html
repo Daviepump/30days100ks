@@ -4,33 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#10151C">
-  <title>Kate’s run log | Running From Responsibilities</title>
-  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../../styles.css">
-  <script src="../../model.js" defer></script>
-  <script src="../../supabase-config.js" defer></script>
-  <script src="../../data.js" defer></script>
-  <script src="../../log.js" defer></script>
+  <title>Private run log | 30 Days. 100 Ks.</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../model.js" defer></script>
+  <script src="../supabase-config.js" defer></script>
+  <script src="../data.js" defer></script>
+  <script src="../log.js" defer></script>
 </head>
-<body data-runner="kate">
+<body data-runner="private">
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-head shell">
-    <a class="brand" href="../../"><span class="brand-icon" aria-hidden="true">↯</span><span>RUNNING FROM<br>RESPONSIBILITIES</span></a>
-    <a href="../../">Public dashboard</a>
+    <a class="brand" href="../"><span class="brand-icon" aria-hidden="true">↯</span><span>30 DAYS.<br>100 KS.</span></a>
+    <a href="../">Public dashboard</a>
   </header>
   <main class="shell log-layout" id="main">
-    <h1>Kate’s run log</h1>
-    <noscript><p class="notice">Enable JavaScript to sign in and record runs.</p></noscript>
+    <h1 id="log-title">Private run log</h1>
+    <noscript><p class="notice">Enable JavaScript to open your private link and record runs.</p></noscript>
     <p id="log-status" class="notice" role="status">Checking your session…</p>
     <button id="retry-log" class="button" type="button" hidden>Retry connection</button>
-    <form id="login" class="panel log-form" hidden>
-      <h2>Sign in</h2>
-      <label>Email <input name="email" type="email" required autocomplete="username"></label>
-      <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
-      <button class="button primary" type="submit">Sign in</button>
-    </form>
-    <button id="logout" class="button" type="button" hidden>Log out</button>
+    <button id="logout" class="button" type="button" hidden>End session</button>
     <div id="log-workspace" hidden>
       <form id="run-form" class="panel log-form">
         <h2 id="form-title">Add a run</h2>

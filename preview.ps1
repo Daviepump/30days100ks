@@ -9,12 +9,14 @@ $types = @{
     '/log.js' = 'text/javascript; charset=utf-8'
     '/data.js' = 'text/javascript; charset=utf-8'
     '/supabase-config.js' = 'text/javascript; charset=utf-8'
-    '/dave/log/index.html' = 'text/html; charset=utf-8'
-    '/kate/log/index.html' = 'text/html; charset=utf-8'
+    '/log/index.html' = 'text/html; charset=utf-8'
+    '/admin/index.html' = 'text/html; charset=utf-8'
+    '/admin/admin.js' = 'text/javascript; charset=utf-8'
     '/tests/supabase-fixture.js' = 'text/javascript; charset=utf-8'
     '/assets/favicon.svg' = 'image/svg+xml'
     '/tests/browser.html' = 'text/html; charset=utf-8'
     '/tests/browser.js' = 'text/javascript; charset=utf-8'
+    '/tests/stage3.cjs' = 'text/javascript; charset=utf-8'
     '/tests/model.test.cjs' = 'text/javascript; charset=utf-8'
 }
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $Port)
@@ -31,8 +33,8 @@ try {
             if (!$request -or $request -notmatch '^GET (/[^ ]*) HTTP/1\.[01]$') { continue }
             $path = ($Matches[1] -split '\?', 2)[0]
             while ($line = $reader.ReadLine()) { }
-            if ($path.StartsWith('/running-from-responsibilities/')) {
-                $path = $path.Substring('/running-from-responsibilities'.Length)
+            if ($path.StartsWith('/30days100ks/')) {
+                $path = $path.Substring('/30days100ks'.Length)
             }
             if ($path.EndsWith('/')) { $path += 'index.html' }
             if ($types.ContainsKey($path)) {

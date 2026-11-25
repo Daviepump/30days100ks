@@ -1,13 +1,7 @@
-# Log runs from a phone
+# Run logging · 30 Days. 100 Ks.
 
-Dave and Kate can bookmark their own `dave/log/` or `kate/log/` page under the site URL. Sign in once on a trusted device. Enter the Sydney date, distance, optional duration and elevation, and select **Save Run**. Use **Edit** or **Delete** beside a record to correct it. Log out on shared devices.
+Open the private link provided by the administrator. The link signs you into the run log for up to 12 hours in that tab. Reopen the original link to start another session. If the link was revoked, request a replacement. Keep it private. Anyone who obtains it can manage your running records until it is revoked.
 
-A saved run’s date, distance, and optional duration and elevation are public on the dashboard. Keep Garmin screenshots, exact running locations, routes, heart rate, and account details out of posted records.
+To record a run, enter the Sydney date, distance, and optional duration and elevation. Select **Save Run**. Use **Edit** or **Delete** beside a previous run. The public dashboard shows the date, distance and optional duration and elevation. Keep Garmin screenshots, GPS, heart rate, routes and contact information out of the site.
 
-## Future Garmin screenshots in ChatGPT
-
-The standard ChatGPT GitHub connection provides repository read access. Run records live in Supabase and GitHub commits do not update them. [OpenAI GitHub connection guidance](https://help.openai.com/en/articles/11145903-connecting-github-to-chatgpt)
-
-A future integration could use a user-authorized action or tool that passes a short-lived, verified Dave identity to a small server-side endpoint. The endpoint would derive the participant from the authenticated identity, require Dave’s explicit confirmation of the extracted date and measurements, accept a stable request ID, and call the existing run API with Dave’s user authorization so database RLS still applies. It should return the run ID and avoid retaining the screenshot. The action should have no ability to write as Kate. Keep any server credentials out of chat, the browser, and Git.
-
-This integration requires separate authorization, implementation and live tests. Both account holders can add runs directly through the website once Supabase is configured.
+The administrator can select **Correct runs** after signing in to their separate portal. See [Codex Cloud management](supabase/CODEX_CLOUD.md) for the separate participant creation API.

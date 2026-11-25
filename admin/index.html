@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Administrator | 30 Days. 100 Ks.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../model.js" defer></script>
+  <script src="../supabase-config.js" defer></script>
+  <script src="../data.js" defer></script>
+  <script src="./admin.js" defer></script>
+</head>
+<body data-runner="admin">
+  <header class="site-head shell"><a href="../">30 Days. 100 Ks.</a><span>Running From Responsibilities</span></header>
+  <main class="shell log-layout">
+    <h1>Administrator</h1>
+    <p id="status" role="status">Checking administrator access…</p>
+    <form id="login" class="panel log-form" hidden>
+      <label>Email <input type="email" name="email" autocomplete="username" required></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="button primary">Sign in</button>
+    </form>
+    <button id="logout" class="button" type="button" hidden>Log out</button>
+    <section id="workspace" hidden>
+      <form id="add" class="panel log-form">
+        <h2>Add participant</h2>
+        <div class="profile-fields"></div>
+        <button class="button primary">Add participant and generate link</button>
+      </form>
+      <section id="issued" class="panel log-form" hidden>
+        <h2>Private logging link</h2>
+        <p>Give this link only to its participant. It is shown once.</p>
+        <label>Logging link <input id="private-url" readonly></label>
+        <div class="form-actions"><button class="button" id="copy">Copy link</button><button class="button" id="clear">Hide link</button></div>
+      </section>
+      <div id="profiles"></div>
+      <section class="panel log-form" id="runs" hidden><h2 id="runs-title">Running records</h2><div id="run-records"></div></section>
+    </section>
+  </main>
+</body>
+</html>

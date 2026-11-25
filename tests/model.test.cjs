@@ -14,10 +14,10 @@ test('Sydney launch and finish are exact UTC instants', () => {
   assert.equal(sydneyDay(Date.parse('2026-11-30T20:00:00-08:00')), '2026-12-01');
   assert.deepEqual(countdown(90061000), [1, 1, 1, 1]);
 });
-test('first day includes today, zero runs and an initial target of 3.23', () => {
+test('first day includes today, zero runs and an initial target of 3.33', () => {
   const result = stats([], '2026-12-01');
-  assert.equal(result.days, 31);
-  assert.equal(result.required.toFixed(2), '3.23');
+  assert.equal(result.days, 30);
+  assert.equal(result.required.toFixed(2), '3.33');
   assert.equal(result.status, 'On track');
   assert.equal(result.pace, null);
 });

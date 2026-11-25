@@ -1,11 +1,12 @@
 (() => {
   'use strict';
-  const config = Object.freeze({name:'Running From Responsibilities', goalKm:100, startDate:'2026-12-01', endDate:'2026-12-31', timezone:'Australia/Sydney'});
+  const config = Object.freeze({name:'30 Days. 100 Ks.', goalKm:100, startDate:'2026-12-01', endDate:'2026-12-31', timezone:'Australia/Sydney'});
   const start = Date.parse('2026-12-01T00:00:00+11:00');
   const end = Date.parse('2027-01-01T00:00:00+11:00');
   const dates = Array.from({length:31}, (_, i) => '2026-12-' + String(i + 1).padStart(2, '0'));
+  const restDay = '2026-12-25';
+  const scheduled = dates.filter(date => date !== restDay);
   const milestones = ['Getting Away With It', 'Halfway to Freedom', 'Almost Off the Hook', 'Responsibilities Successfully Avoided'];
-  const participants = Object.freeze({dave:'Dave', kate:'Kate'});
   const formatter = new Intl.DateTimeFormat('en', {timeZone:config.timezone, year:'numeric', month:'2-digit', day:'2-digit'});
   function sydneyDay(now) {
     const parts = Object.fromEntries(formatter.formatToParts(now).map(p => [p.type, p.value]));
@@ -43,10 +44,10 @@
     return data.runs.filter(run => dates.includes(run.date)).sort((a,b) => a.date.localeCompare(b.date));
   }
   function stats(runs, today, goalKm = config.goalKm) {
-    const target = goalKm / dates.length;
+    const target = goalKm / scheduled.length;
     const before = today < dates[0];
     const ended = today > dates.at(-1);
-    const days = before ? dates.length : dates.filter(date => date >= today).length;
+    const days = scheduled.filter(date => date >= today).length;
     const visible = runs.filter(run => run.date <= today);
     const grouped = dates.map(date => visible.filter(run => run.date === date));
     const sumDistance = list => list.reduce((sum, run) => sum + run.distanceKm, 0);
@@ -56,13 +57,13 @@
     let longestStreak = 0;
     let current = 0;
     const cumulative = daily.map((distance, index) => {
-      streak = distance > 0 ? streak + 1 : 0;
+      streak = distance > 0 ? streak + 1 : dates[index] === restDay ? streak : 0;
       longestStreak = Math.max(longestStreak, streak);
       if (dates[index] <= today && (dates[index] === today ? distance > 0 : true)) current = streak;
       total = Math.round((total + distance) * 1e9) / 1e9;
       return total;
     });
-    const expected = (dates.length - days) * target;
+    const expected = (scheduled.length - days) * target;
     const delta = total - expected;
     const remaining = Math.max(0, goalKm - total);
     const timed = visible.filter(run => run.durationSeconds !== undefined);
@@ -94,16 +95,16 @@
       ...(index % 4 ? {durationSeconds: distanceKm * (320 + index * 3), elevationGainM: index * 14} : {})
     }] : []);
     if (mode === 'example') runs.push({id:'preview-second', date:dates[0], distanceKm:2.5, durationSeconds:840});
-    const makePayload = entries => ({
+    const makePayload = (entries,name,accent) => ({name,accent,
       challenge:config, goalKm:config.goalKm, lastUpdated:entries.length ? new Date(instant).toISOString() : null, runs:entries
     });
     const kateRuns = runs.map(({id, distanceKm, durationSeconds, ...run}) => ({
       ...run, id:'kate-' + id, distanceKm:distanceKm / 2,
       ...(durationSeconds === undefined ? {} : {durationSeconds:durationSeconds / 2})
     }));
-    return {now:wall => instant + wall - origin, payload:{dave:makePayload(runs), kate:makePayload(kateRuns)}};
+    return {now:wall => instant + wall - origin, payload:{dave:makePayload(runs,'Dave','#B9F94B'), kate:makePayload(kateRuns,'Kate','#D59BFF'), ...(mode === 'example' ? {steve:makePayload([],'Steve','#93C5FD')} : {})}};
   }
-  const model = {config, start, end, dates, participants, milestones, sydneyDay, phase, countdown, validDate, validate, stats, preview};
+  const model = {config, start, end, dates, restDay, scheduled, milestones, sydneyDay, phase, countdown, validDate, validate, stats, preview};
   if (typeof module !== 'undefined') module.exports = model;
   else globalThis.RunningChallenge = model;
 })();

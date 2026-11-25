@@ -1041,6 +1041,15 @@ dialog form{
 .form-status { margin:0; color:var(--accent); }
 .error-text { color:var(--warn); }
 .button.danger { color:var(--warn); }
+.brand-subtitle { margin:14px 0 0; color:white; font-weight:800; font-size:clamp(1.1rem,3vw,1.55rem); }
+.brand-subtitle + .tagline { margin-top:8px; }
+.rest-note { color:var(--muted); }
+.landing-roster { display:flex; flex-wrap:wrap; gap:8px; list-style:none; padding:0; margin:12px 0 0; }
+.landing-roster li { border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--panel); padding:8px 12px; border-radius:8px; }
+.day.rest-day { border-color:#b9f94b66; background:#213326; color:#d4f1ba; }
+.day.rest-day .icon { color:#b9f94b; }
+.profile-fields { display:grid; gap:14px; }
+.log-form select { min-height:44px; font:inherit; color:inherit; background:#111b23; }
 button:disabled { opacity:.65; cursor:wait; }
 
 @media(max-width:720px) { .runner-grid { grid-template-columns:1fr; } }

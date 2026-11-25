@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10151C">
-  <meta name="description" content="Follow Running From Responsibilities, two individual 100 km running challenges in December 2026.">
+  <meta name="description" content="Follow Running From Responsibilities, the December 100 km challenge in December 2026.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Running From Responsibilities">
-  <meta property="og:description" content="31 days. 100 km each. Zero valid excuses. Follow the December 2026 running challenge.">
+  <meta property="og:title" content="30 Days. 100 Ks.">
+  <meta property="og:description" content="100 km. Zero valid excuses. One Christmas break. Follow the December 2026 running challenge.">
   <meta name="twitter:card" content="summary">
-  <title>Running From Responsibilities | December 2026</title>
+  <title>30 Days. 100 Ks. | Running From Responsibilities</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
   <script src="./model.js" defer></script>
@@ -20,7 +20,7 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-head shell">
-    <a class="brand" href="./" aria-label="Running From Responsibilities home"><span class="brand-icon" data-icon="bolt"></span><span>RUNNING FROM<br>RESPONSIBILITIES</span></a>
+    <a class="brand" href="./" aria-label="Running From Responsibilities home"><span class="brand-icon" data-icon="bolt"></span><span>30 DAYS.<br>100 KS.</span></a>
     <span class="season"><i></i> DECEMBER 2026</span>
   </header>
   <aside id="preview" class="preview shell" hidden></aside>
@@ -38,8 +38,8 @@
           </svg>
         </div>
         <p class="eyebrow"><span></span> THE STARTING LINE AWAITS</p>
-        <h1 id="landing-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1>
-        <p class="tagline">31 days. 100 km each. Zero valid excuses.</p>
+        <h1 id="landing-title">30 Days. <em>100 Ks.</em></h1>
+        <p class="brand-subtitle">Running From Responsibilities</p><p class="tagline">100 km. Zero valid excuses. One Christmas break.</p>
         <div class="landing-clock">
           <h2>Countdown to kickoff</h2>
           <div id="launch-clock" class="clock"></div>
@@ -47,22 +47,22 @@
         </div>
       </div>
       <div class="brief">
-        <div data-runner="dave"><span data-icon="target"></span><div><strong>Dave</strong><span>100 km goal · 3.23 km/day</span></div></div>
-        <div data-runner="kate"><span data-icon="target"></span><div><strong>Kate</strong><span>100 km goal · 3.23 km/day</span></div></div>
+        <div><span data-icon="target"></span><div><strong>3.33 <small>km/day</small></strong><span>Initial pace for a 100 km goal</span></div></div>
+        <div><span data-icon="tree"></span><div><strong>25 Dec</strong><span>Even Santa gets a rest day.</span></div></div>
       </div>
+      <ul id="landing-roster" class="landing-roster" aria-label="Participants" hidden></ul>
     </section>
     <section id="dashboard" hidden aria-labelledby="dashboard-title">
-      <div class="dash-head"><div><p class="eyebrow"><span></span> 1–31 DECEMBER · SYDNEY</p><h1 id="dashboard-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1><p class="tagline">31 days. 100 km each. Zero valid excuses.</p></div></div>
+      <div class="dash-head"><div><p class="eyebrow"><span></span> 1–31 DECEMBER · SYDNEY</p><h1 id="dashboard-title">30 Days. <em>100 Ks.</em></h1><p class="brand-subtitle">Running From Responsibilities</p><p class="tagline">100 km. Zero valid excuses. One Christmas break.</p></div></div>
       <p id="announcement" class="notice" role="status" hidden></p>
       <div id="dash-clock" class="panel dash-clock"><h2 id="finish-title">Time to the finish</h2><div id="finish-clock" class="clock"></div></div>
       <div id="data-status" aria-live="polite"></div>
-      <div id="results" class="runner-grid">
-        <section data-runner="dave" aria-labelledby="dave-title"><h2 id="dave-title" class="runner-name">Dave</h2><div class="runner-results"></div></section>
-        <section data-runner="kate" aria-labelledby="kate-title"><h2 id="kate-title" class="runner-name">Kate</h2><div class="runner-results"></div></section>
-      </div>
+      <p class="notice" id="empty-roster" hidden>No active participants.</p>
+      <p class="rest-note">25 December · Even Santa gets a rest day.</p>
+      <div id="results" class="runner-grid"></div>
     </section>
   </main>
-  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p><nav aria-label="Private run logging"><a href="./dave/log/">Dave’s run log</a><a href="./kate/log/">Kate’s run log</a></nav></footer>
+  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p><a href="./admin/">Administrator</a></footer>
   <dialog id="day-dialog"><div id="day-details"></div><form method="dialog"><button class="button">Close</button></form></dialog>
   <div id="confetti" aria-hidden="true"></div>
 </body>

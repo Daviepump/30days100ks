@@ -15,6 +15,7 @@ const shapes = {
   bolt:'M13 2 4 14h7l-1 8 10-12h-8z', target:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 5h.01',
   calendar:'M3 6h18v15H3zM7 3v6m10-6v6M3 11h18', activity:'M2 12h5l3-7 4 14 3-7h5',
   time:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4v6l4 2', trophy:'M7 3h10v9a5 5 0 0 1-10 0zm0 2H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4m-5 5v4m-5 0h10',
+  tree:'M12 2 6 9h3l-5 6h4l-3 4h14l-3-4h4l-5-6h3zM12 19v3',
   lock:'M5 10h14v11H5zm3 0V6a4 4 0 0 1 8 0v4', flag:'M4 22V3h15l-4 5 4 5H4', mountain:'M2 20 9 7l4 7 3-5 6 11z'
 };
 const icon = name => '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + shapes[name] + '"/></svg>';
@@ -56,6 +57,7 @@ function chart(result, today, cumulative) {
   const values = cumulative ? result.cumulative : result.daily;
   const reference = cumulative ? result.goalKm : result.target;
   const limit = Math.ceil(Math.max(reference, ...values) / (cumulative ? 50 : 5)) * (cumulative ? 50 : 5);
+  const expected = M.dates.map(date => M.scheduled.filter(day => day <= date).length * result.target);
   const highDay = Math.max(...result.daily);
   const x = i => 47 + i * 12;
   const y = v => 151 - 134 * v / limit;
@@ -64,7 +66,7 @@ function chart(result, today, cumulative) {
   const series = cumulative
     ? '<polyline points="' + values.slice(0,lastIndex+1).map((v,i) => x(i) + ',' + y(v)).join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="3"/>' +
       (lastIndex >= 0 ? '<circle cx="' + x(lastIndex) + '" cy="' + y(values[lastIndex]) + '" r="4" fill="var(--accent)"/>' : '') +
-      '<path d="M' + x(0) + ' ' + y(result.target) + 'L' + x(30) + ' ' + y(result.goalKm) + '" stroke="#a6b4c4" stroke-width="1.8" stroke-dasharray="5 4"/>'
+      '<polyline points="' + expected.map((v,i) => x(i) + ',' + y(v)).join(' ') + '" fill="none" stroke="#a6b4c4" stroke-width="1.8" stroke-dasharray="5 4"/>'
     : values.map((v,i) => '<rect x="' + (x(i)-4) + '" y="' + (v ? y(v) : 149) + '" width="8" height="' + (v ? 151-y(v) : 2) +
       '" rx="2" fill="' + (v && v === highDay ? '#f4bc68' : v ? 'var(--accent)' : '#475665') + '"/>').join('');
   const axes = [0,limit/2,limit].map(v => '<path d="M41 ' + y(v) + 'H414" stroke="#435261" stroke-width=".7"/><text x="36" y="' + (y(v)+4) +
@@ -72,7 +74,7 @@ function chart(result, today, cumulative) {
     [0,6,13,20,30].map(i => '<text x="' + x(i) + '" y="170" text-anchor="middle">' + (i+1) + '</text>').join('');
   const title = cumulative ? 'Cumulative running progress' : 'Daily running distance';
   const labels = M.dates.map((date,i) => (i+1) + ' Dec · ' + (cumulative && i > lastIndex ? 'Future date' : km(values[i])) +
-    (cumulative ? ' · Expected ' + km((i+1)*result.target) : values[i] && values[i] === highDay ? ' · Longest day' : '') +
+    (cumulative ? ' · Expected ' + km(expected[i]) : values[i] && values[i] === highDay ? ' · Longest day' : '') +
     (i === todayIndex ? ' · Today' : ''));
   return '<section class="panel"><h2>' + title + '</h2><div class="legend"><span>Recorded km</span><span style="--key:#a6b4c4">' +
     (cumulative ? 'Expected progress' : 'Daily target · ' + km(result.target)) + '</span><span style="--key:#f4bc68">' + (cumulative ? km(result.goalKm) + ' finish' : 'Longest day') +
@@ -92,15 +94,24 @@ let requested = false;
 const previous = new Map();
 const completed = new Set();
 
-function renderParticipant(slug, payload) {
-  const root = document.querySelector('[data-runner="' + slug + '"] .runner-results');
+function renderParticipant(slug, payload, position) {
+  let section = $('results').querySelector('[data-runner="' + slug + '"]');
+  if (!section) {
+    section = document.createElement('section');
+    section.dataset.runner = slug;
+    section.innerHTML = '<h2 class="runner-name"></h2><div class="runner-results"></div>';
+  }
+  const root = section.querySelector('.runner-results');
   const signature = JSON.stringify([today,payload]);
+  if ($('results').children[position] !== section) $('results').insertBefore(section,$('results').children[position] ?? null);
   if (previous.get(slug) === signature) return;
+  section.style.setProperty('--accent',payload.accent);
+  section.querySelector('.runner-name').textContent = payload.name;
   previous.set(slug,signature);
   const r = M.stats(payload.runs,today,payload.goalKm);
   const complete = r.remaining === 0;
   const tiles = [
-    ['Distance completed',km(r.total),'activity'],['Distance remaining',km(r.remaining),'target'],['Days remaining',r.days,'calendar','Includes today while active'],
+    ['Distance completed',km(r.total),'activity'],['Distance remaining',km(r.remaining),'target'],['Days remaining',r.days,'calendar','Scheduled days · Christmas excluded'],
     ['Required daily average',r.required == null ? '—' : km(r.required) + '/day','flag'],
     ['Longest run',r.visible.length ? km(r.longest) : '—','mountain'],['Runs recorded',r.visible.length,'activity'],
     ['Average pace',pace(r.pace),'time','Runs with recorded durations'],['Total running time',duration(r.time),'time','Recorded durations'],
@@ -111,10 +122,11 @@ function renderParticipant(slug, payload) {
   const numbers = r.delta > .005 ? km(r.delta) + ' ahead of expected progress' : r.delta < -.005 ? km(-r.delta) + ' behind expected progress' : 'On the expected distance';
   const calendar = M.dates.map((date,i) => {
     const distance = r.daily[i];
-    const className = 'day' + (date === today ? ' today' : '') + (date > today ? ' future' : '');
+    const rest = date === M.restDay;
+    const className = 'day' + (rest ? ' rest-day' : '') + (date === today ? ' today' : '') + (date > today ? ' future' : '');
     const current = date === today ? ' aria-current="date"' : '';
-    const content = '<span>' + (i+1) + '</span>';
-    return distance ? '<button class="' + className + ' run-day" data-day="' + i + '" aria-label="' + dLabel(date) + ', ' + km(distance) +
+    const content = '<span>' + (i+1) + '</span>' + (rest ? '<span title="Even Santa gets a rest day.">' + icon('tree') + '<span class="sr-only">Christmas rest day</span></span>' : '');
+    return distance ? '<button class="' + className + ' run-day" data-day="' + i + '" aria-label="' + dLabel(date) + ', ' + km(distance) + (rest ? ', Christmas rest day' : '') +
       '" style="--intensity:' + Math.min(28, 7 + distance) + '%"' + current + '>' + content + icon('activity') + '<small>' + km(distance) +
       '</small></button>' : '<div class="' + className + '"' + current + '>' + content + (date <= today ? '<small>0 km</small>' : '') + '</div>';
   }).join('');
@@ -155,7 +167,9 @@ function renderParticipant(slug, payload) {
     button.onclick = () => {
       const day = Number(button.dataset.day);
       $('day-dialog').dataset.runner = slug;
-      $('day-details').innerHTML = '<h2 id="day-title">' + M.participants[slug] + ' · ' + dLabel(M.dates[day]) + ' · ' + km(r.daily[day]) + '</h2>' + activities(r.grouped[day]);
+      $('day-dialog').style.setProperty('--accent',payload.accent);
+      $('day-details').innerHTML = '<h2 id="day-title"></h2>' + activities(r.grouped[day]);
+      $('day-title').textContent = payload.name + ' · ' + dLabel(M.dates[day]) + ' · ' + km(r.daily[day]);
       $('day-dialog').setAttribute('aria-labelledby','day-title');
       $('day-dialog').showModal();
     };
@@ -169,11 +183,32 @@ function renderParticipant(slug, payload) {
 
 function render() {
   if (!snapshot) return;
-  for (const slug of Object.keys(M.participants)) renderParticipant(slug,snapshot[slug]);
+  if (phase === 'pre') {
+    const roster = $('landing-roster');
+    roster.replaceChildren(...Object.values(snapshot).map(profile => {
+      const item = document.createElement('li');
+      item.style.setProperty('--accent',profile.accent);
+      const name = document.createElement('strong');
+      name.textContent = profile.name;
+      item.append(name,' · ' + km(profile.goalKm));
+      return item;
+    }));
+    roster.hidden = !roster.children.length;
+    return;
+  }
+  for (const card of [...$('results').children]) {
+    if (!Object.hasOwn(snapshot,card.dataset.runner)) {
+      previous.delete(card.dataset.runner);
+      completed.delete(card.dataset.runner);
+      card.remove();
+    }
+  }
+  Object.entries(snapshot).forEach(([slug,profile],index) => renderParticipant(slug,profile,index));
+  $('empty-roster').hidden = Object.keys(snapshot).length !== 0;
 }
 
 async function load() {
-  if (loading || phase === 'pre') return;
+  if (loading) return;
   loading = requested = true;
   if (!snapshot) $('data-status').innerHTML = '<p class="notice">Loading running data…</p>';
   try {
@@ -184,6 +219,7 @@ async function load() {
     $('data-status').replaceChildren();
     render();
   } catch (error) {
+    if (phase === 'pre') return;
     const message = error.code === 'configuration' ? 'The live database has not been configured.' :
       snapshot ? 'Could not refresh running data. Showing the last successful update.' : 'Running data is temporarily unavailable.';
     $('data-status').innerHTML = '<p class="notice error">' + message + ' <button class="button" id="retry">Retry</button></p>';
@@ -211,6 +247,7 @@ function tick() {
     if (nextPhase === 'ended') $('announcement').hidden = true;
     if (launched) { $('dashboard').classList.add('launching'); celebrate(); }
     phase = nextPhase;
+    if (launched && !simulation) load();
   }
   if (phase === 'pre') launchClock(M.start - instant);
   if (phase === 'active') finishClock(M.end - instant);
@@ -218,7 +255,7 @@ function tick() {
     if (today !== M.config.startDate) $('announcement').hidden = true;
     if (requested) render();
   }
-  if (phase !== 'pre' && !requested) load();
+  if (!requested) load();
 }
 tick();
 setInterval(tick,250);

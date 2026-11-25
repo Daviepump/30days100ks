@@ -1,0 +1,4 @@
+project_id = "30days100ks"
+
+[functions.challenge]
+verify_jwt = false

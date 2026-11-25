@@ -1,13 +1,17 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const slug = document.body.dataset.runner;
   const M = RunningChallenge;
-  const login = $('login');
   const form = $('run-form');
   const fields = form.elements;
   const dialog = $('delete-dialog');
-  let api;
+  let session;
+  let linkToken;
+  const sessionKey = 'rfr-participant-session';
+  if (location.hash) {
+    linkToken = new URLSearchParams(location.hash.slice(1)).get('token');
+    history.replaceState(null,'',location.pathname+location.search);
+  }
   let canWrite = false;
   let busy = false;
   let readId = 0;
@@ -110,20 +114,24 @@
     }
   }
 
+  const request = async (action,values = {}) => (await RunningData.edge('participant.'+action,{...values,session})).data;
+
   async function refreshRuns() {
     if (!canWrite) return;
     const current = generation;
-    const request = ++readId;
+    const fetchId = ++readId;
     $('reload-runs').hidden = true;
     $('history-status').textContent = 'Loading runs…';
     try {
-      const latest = await api.list(slug);
-      if (current !== generation || request !== readId) return;
+      const profile = await request('list');
+      const latest = profile.runs.map(RunningData.normalize);
+      if (current !== generation || fetchId !== readId) return;
       runs = latest;
       renderRuns();
       $('history-status').textContent = runs.length ? '' : 'No runs logged yet.';
-    } catch {
-      if (current !== generation || request !== readId) return;
+    } catch (error) {
+      if (current !== generation || fetchId !== readId) return;
+      if (error.code === 'denied') { endSession(); return; }
       $('history-status').textContent = 'Could not load previous runs.';
       $('reload-runs').hidden = false;
     }
@@ -141,74 +149,23 @@
     formStatus('');
   }
 
-  async function syncSession() {
-    const current = generation;
-    try {
-      const session = await api.session();
-      if (generation !== current) return;
-      $('retry-log').hidden = true;
-      login.hidden = !!session;
-      $('logout').hidden = !session;
-      if (!session) {
-        clearPrivate();
-        status('');
-        return;
-      }
-      if ((await api.participant()) !== slug) {
-        if (generation !== current) return;
-        clearPrivate();
-        status('This account cannot access ' + M.participants[slug] + '’s run log. Log out to switch accounts.',true);
-        return;
-      }
-      if (generation !== current) return;
-      if (!canWrite) {
-        canWrite = true;
-        $('log-workspace').hidden = false;
-        status('');
-        await refreshRuns();
-      }
-    } catch {
-      if (generation !== current) return;
-      clearPrivate();
-      status('Could not verify your session. Try reconnecting.',true);
-      $('retry-log').hidden = false;
-    }
-  }
-
   function setBusy(value) {
     busy = value;
     $('save').disabled = value;
     $('cancel-edit').disabled = value;
     $('logout').disabled = value;
-    login.querySelector('button').disabled = value;
     for (const input of form.querySelectorAll('input')) input.disabled = value;
   }
 
-  login.addEventListener('submit',async event => {
-    event.preventDefault();
-    if (busy || !api) return;
-    setBusy(true);
-    status('Signing in…');
-    try {
-      await api.signIn(login.elements.email.value.trim(),login.elements.password.value);
-      login.reset();
-      await syncSession();
-    } catch {
-      status('Could not sign in. Check your email and password or try again.',true);
-    } finally { setBusy(false); }
-  });
-
-  $('logout').onclick = async () => {
-    if (busy) return;
-    setBusy(true);
+  function endSession() {
+    session = null;
+    sessionStorage.removeItem(sessionKey);
     clearPrivate();
-    try {
-      await api.signOut();
-      await syncSession();
-    } catch {
-      status('Could not log out. Try again.',true);
-    } finally { setBusy(false); }
-  };
+    $('logout').hidden = true;
+    $('log-title').textContent = 'Private run log';
+    status('Open your private logging link to start a session.',true);
+  }
+  $('logout').onclick = endSession;
 
   async function mutate(operation, confirmation, report = formStatus) {
     if (busy || !canWrite) return;
@@ -223,6 +180,7 @@
       await refreshRuns();
     } catch (error) {
       if (current !== generation) return;
+      if (error.code === 'denied') { endSession(); return; }
       if (error.code === 'conflict' || error.code === 'duplicate') {
         report('This record changed or was already saved. Review the refreshed list before trying again.',true);
         resetForm();
@@ -250,7 +208,7 @@
     // Retries use the same primary key if the first request reached the database.
     if (!existing && !draftId) draftId = crypto.randomUUID();
     mutate(async () => {
-      await api.save(slug,existing || {id:draftId},values);
+      await request('save',{...values,id:existing?.id ?? draftId,updated_at:existing?.updatedAt});
       resetForm();
     },existing ? 'Run updated.' : 'Run saved.');
   });
@@ -260,7 +218,7 @@
     deleting = null;
     if (!run || dialog.returnValue !== 'delete') return;
     mutate(async () => {
-      await api.remove(slug,run);
+      await request('delete',{id:run.id,updated_at:run.updatedAt});
       if (editing?.id === run.id) resetForm();
     },'Run deleted.', (message,error) => {
       $('delete-status')?.remove();
@@ -277,15 +235,39 @@
   $('reload-runs').onclick = refreshRuns;
   async function connect() {
     $('retry-log').hidden = true;
+    status('Checking your private link…');
     try {
-      if (!api) {
-        api = await RunningData.logger();
-        api.onAuth(syncSession);
+      if (linkToken) {
+        sessionStorage.removeItem(sessionKey);
+        session = null;
+        const result = await RunningData.edge('exchange',{token:linkToken});
+        linkToken = null;
+        sessionStorage.setItem(sessionKey,result.secret);
       }
-      await syncSession();
+      session = sessionStorage.getItem(sessionKey);
+      if (!session) { endSession(); return; }
+      const profile = await request('list');
+      sessionStorage.setItem(sessionKey,session);
+      $('log-title').textContent = profile.display_name + '’s run log';
+      document.body.style.setProperty('--accent',profile.accent);
+      runs = profile.runs.map(RunningData.normalize);
+      renderRuns();
+      $('history-status').textContent = runs.length ? '' : 'No runs logged yet.';
+      canWrite = true;
+      $('log-workspace').hidden = false;
+      $('logout').hidden = false;
+      status('');
     } catch (error) {
-      status(error.code === 'configuration' ? 'The run log needs its Supabase configuration.' : 'Could not connect to the run log.',true);
-      $('retry-log').hidden = false;
+      clearPrivate();
+      if (error.code === 'denied') {
+        linkToken = null;
+        endSession();
+        status('This private link or session has expired or been revoked.',true);
+      } else {
+        status(error.code === 'configuration' ? 'The run log needs its Supabase configuration.' :
+          error.code === 'rate' ? 'Too many attempts. Wait a minute and retry.' : 'Could not connect to the run log.',true);
+        $('retry-log').hidden = false;
+      }
     }
   }
   $('retry-log').onclick = connect;

@@ -1,4 +1,4 @@
--- Run once in the SQL Editor of the dedicated challenge project.
+-- Base schema for a fresh project. Follow immediately with stage3.sql.
 begin;
 
 create schema if not exists rfr_private;
@@ -91,7 +91,3 @@ revoke all on function public.rfr_dashboard() from public, anon, authenticated;
 grant execute on function public.rfr_dashboard() to anon, authenticated;
 
 commit;
-
--- After creating both Auth users, run this separately with their actual User UIDs.
--- insert into rfr_private.account_links (participant, user_id) values
---   ('dave', '<DAVE_USER_UUID>'), ('kate', '<KATE_USER_UUID>');

@@ -43,7 +43,7 @@
       clients.set(authenticated,library.createClient(url,publishableKey,{
         auth:{
           persistSession:authenticated, autoRefreshToken:authenticated, detectSessionInUrl:false,
-          storageKey:authenticated ? 'rfr-run-logger' : 'rfr-public'
+          storageKey:authenticated ? 'rfr-admin' : 'rfr-public'
         },
         global:{fetch:(url,options = {}) => {
           const deadline = AbortSignal.timeout(12000);
@@ -72,58 +72,51 @@
   async function snapshot() {
     const db = await client();
     const rows = await unwrap(db.rpc('rfr_dashboard'));
-    if (!Array.isArray(rows) || rows.length !== Object.keys(M.participants).length) throw new Error('Runner data is incomplete.');
-    return Object.fromEntries(Object.keys(M.participants).map(slug => {
-      const profile = rows.find(row => row.participant === slug);
-      if (!profile || !Number.isFinite(profile.goal_km) || profile.goal_km <= 0 || !Array.isArray(profile.runs)) {
+    if (!Array.isArray(rows) || new Set(rows.map(row => row.participant)).size !== rows.length) throw new Error('Runner data is incomplete.');
+    return Object.fromEntries(rows.map(profile => {
+      const slug = profile.participant;
+      if (typeof slug !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug) || typeof profile.display_name !== 'string' ||
+          !/^#[0-9A-Fa-f]{6}$/.test(profile.accent) || !Number.isFinite(profile.goal_km) || profile.goal_km <= 0 || !Array.isArray(profile.runs)) {
         throw new Error('Runner data is invalid.');
       }
       const runs = profile.runs.map(normalize);
       if (runs.some(run => !Number.isFinite(Date.parse(run.updatedAt)))) throw new Error('Run update timestamp is invalid.');
       const lastUpdated = runs.reduce((last,run) => Math.max(last,Date.parse(run.updatedAt)),0);
-      return [slug,{challenge:M.config, goalKm:profile.goal_km, runs,lastUpdated:lastUpdated ? new Date(lastUpdated).toISOString() : null}];
+      return [slug,{name:profile.display_name,accent:profile.accent,challenge:M.config, goalKm:profile.goal_km, runs,lastUpdated:lastUpdated ? new Date(lastUpdated).toISOString() : null}];
     }));
   }
 
-  async function logger() {
+  async function edge(action,payload = {},bearer) {
+    const {url,publishableKey} = RunningSupabaseConfig;
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url) || !/^sb_publishable_[\w-]+$/.test(publishableKey)) {
+      throw configurationError('Enter the Supabase project URL and publishable key.');
+    }
+    const response = await fetch(url.replace(/\/$/,'')+'/functions/v1/challenge',{
+      method:'POST',cache:'no-store',signal:AbortSignal.timeout(15000),
+      headers:{apikey:publishableKey,'Content-Type':'application/json',...(bearer ? {Authorization:'Bearer '+bearer} : {})},
+      body:JSON.stringify({...payload,action})
+    });
+    const result = await response.json();
+    if (!response.ok) throw Object.assign(new Error('Request failed'),{code:result.code});
+    return result;
+  }
+
+  async function admin() {
     const db = await client(true);
-    const table = () => db.from('rfr_runs');
-    const columns = 'id,run_date,distance_km,duration_seconds,elevation_m,updated_at';
     return {
-      session:async () => (await unwrap(db.auth.getSession())).session,
-      signIn:async (email,password) => unwrap(db.auth.signInWithPassword({email,password})),
+      signIn:(email,password) => unwrap(db.auth.signInWithPassword({email,password})),
       signOut:() => unwrap(db.auth.signOut({scope:'local'})),
+      session:async () => (await unwrap(db.auth.getSession())).session,
       onAuth:callback => db.auth.onAuthStateChange(() => setTimeout(callback,0)),
-      participant:() => unwrap(db.rpc('rfr_my_participant')),
-      list:async slug => (await unwrap(table().select(columns).eq('participant',slug)
-        .order('run_date',{ascending:false}).order('created_at',{ascending:false}))).map(normalize),
-      save:async (slug,run,values) => {
-        if (run.updatedAt) {
-          const result = await unwrap(table().update(values).eq('participant',slug).eq('id',run.id)
-            .eq('updated_at',run.updatedAt).select(columns).maybeSingle());
-          if (!result) throw Object.assign(new Error('This record changed.'),{code:'conflict'});
-          return normalize(result);
-        }
-        try {
-          return normalize(await unwrap(table().insert({...values,id:run.id,participant:slug}).select(columns).single()));
-        } catch (error) {
-          if (error.code !== '23505') throw error;
-          const result = await unwrap(table().select(columns).eq('participant',slug).eq('id',run.id).maybeSingle());
-          if (!result || !Object.entries(values).every(([key,value]) => result[key] === value)) {
-            throw Object.assign(new Error('This request already exists with different values.'),{code:'duplicate'});
-          }
-          return normalize(result);
-        }
-      },
-      remove:async (slug,run) => {
-        const result = await unwrap(table().delete().eq('participant',slug).eq('id',run.id)
-          .eq('updated_at',run.updatedAt).select('id').maybeSingle());
-        if (!result) throw Object.assign(new Error('This record changed.'),{code:'conflict'});
+      request:async (action,payload) => {
+        const session = (await unwrap(db.auth.getSession())).session;
+        if (!session) throw Object.assign(new Error('Sign in required'),{code:'denied'});
+        return edge('admin.'+action,payload,session.access_token);
       }
     };
   }
 
-  globalThis.RunningData = {snapshot,logger,notify:() => channel?.postMessage('changed'),onChange:callback => {
+  globalThis.RunningData = {snapshot,edge,admin,normalize,notify:() => channel?.postMessage('changed'),onChange:callback => {
     channel?.addEventListener('message',callback);
   }};
 })();
