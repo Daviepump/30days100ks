@@ -1,19 +1,13 @@
 # Running From Responsibilities
 
-This repository serves the public 150 km December 2026 running challenge from `F:\Running_From_Responsibilities`. The challenge runs 1–31 December 2026 inclusive in Australia/Sydney. Keep the work in this project and avoid unrelated repository changes.
+Work in `F:\Running_From_Responsibilities`. Preserve the Stage 1 commit and the dark sports design, Sydney-time countdown, automatic launch, responsive layout, keyboard controls, accessible contrast, and reduced-motion support. Dave uses #B9F94B and Kate uses #D59BFF. Both have individual 100 km goals from 1–31 December 2026 inclusive in Australia/Sydney. Use the shared dashboard renderer.
 
-Keep the design responsive and accessible. Use the dark sport palette (#10151C background, #1B2530 cards, #B9F94B accent, #FFFFFF text, #A6B4C4 secondary text, #F4BC68 warning), keyboard controls, visible focus, accessible contrast, and reduced motion support. Keep static website paths relative and runtime assets self-contained.
+## Data and security
 
-## Run updates
+Supabase is the sole production authority. Use `supabase/setup.sql` for schema, RLS, and explicit API grants. Keep both accounts mapped privately. Only a mapped authenticated user may insert, edit, or delete that participant’s runs. Public data is limited to the approved summaries. Logging explicitly publishes the run date, distance, and optional duration and elevation. Keep email, account IDs, GPS, locations, heart rate, screenshots, and credentials out of public data and Git.
 
-Use `runs.json` as the sole source of activity. Preserve the existing challenge metadata and every existing run except the exact record the owner requests to correct or remove. Change only `runs.json` for routine running updates.
+Use only the project URL and publishable key in `supabase-config.js`. Disable public signup and anonymous Auth users in Supabase. Do not introduce production JSON mirrors. Preserve every existing run unless the owner requests a specific edit or deletion. Use the row ID and last updated timestamp when editing or deleting. Preserve same-day runs and protect submissions with stable request UUIDs.
 
-- Require a unique nonempty, trimmed string ID, a real ISO calendar date (`YYYY-MM-DD`) and a finite positive numeric `distanceKm`.
-- Allow multiple runs per day. Exclude records outside the challenge period from statistics and only add December 2026 runs through the update workflow.
-- Optional `durationSeconds` must be finite and positive. Optional `elevationGainM` must be finite and nonnegative. Omit unavailable fields.
-- Check the latest branch head before writing, and re-read and revalidate after any concurrent update. Set `lastUpdated` to the UTC ISO timestamp at the time of a successful edit.
-- Publish only approved activity summaries. Keep credentials, GPS, exact locations, heart rate, raw screenshots and other private data out of the repository and its Git history.
+## Verification and deployment
 
-## Deployment
-
-Read [UPDATE_RUNS.md](UPDATE_RUNS.md) before a data edit. Run the validation checks in [README.md](README.md). After owner approval, use the public `running-from-responsibilities` GitHub repository and GitHub Pages configured to publish from `main` at `/(root)`. Keep `.nojekyll`, verify the Pages deployment for the committed SHA, and verify the served file. Report any pending deployment or permissions.
+Run the local browser checks and distinguish mock results from live Supabase tests. Use the rolled-back SQL permission checks and the live Auth checklist in `supabase/README.md` after setup. Keep assets relative for GitHub Pages and preserve `.nojekyll`. Publish only with owner approval. Use `main` at `/(root)`. Avoid unrelated repositories and changes.

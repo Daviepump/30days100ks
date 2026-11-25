@@ -14,10 +14,10 @@ test('Sydney launch and finish are exact UTC instants', () => {
   assert.equal(sydneyDay(Date.parse('2026-11-30T20:00:00-08:00')), '2026-12-01');
   assert.deepEqual(countdown(90061000), [1, 1, 1, 1]);
 });
-test('first day includes today, zero runs and an initial target of 4.84', () => {
+test('first day includes today, zero runs and an initial target of 3.23', () => {
   const result = stats([], '2026-12-01');
   assert.equal(result.days, 31);
-  assert.equal(result.required.toFixed(2), '4.84');
+  assert.equal(result.required.toFixed(2), '3.23');
   assert.equal(result.status, 'On track');
   assert.equal(result.pace, null);
 });
@@ -40,15 +40,26 @@ test('multiple runs, weighted pace, streaks and milestone dates', () => {
   assert.equal(stats([run('a',1,2)], '2026-12-06').status, 'Behind target');
 });
 test('final day, completion, overachievement and final results', () => {
-  assert.equal(stats([], '2026-12-31').required, 150);
-  assert.equal(stats([run('x',31,150)], '2026-12-31').status, 'Challenge completed');
-  assert.equal(stats([run('x',31,160)], '2027-01-01').percent, 160 / 150 * 100);
+  assert.equal(stats([], '2026-12-31').required, 100);
+  assert.equal(stats([run('x',31,100)], '2026-12-31').status, 'Challenge completed');
+  assert.equal(stats([run('x',31,160)], '2027-01-01').percent, 160 / 100 * 100);
   assert.equal(stats([], '2027-01-01').required, null);
   assert.equal(stats([], '2027-01-01').status, 'Challenge ended');
 });
 test('preview states use isolated data and a running launch clock', () => {
   assert.equal(phase(preview('launch', 0).now(9999)), 'pre');
   assert.equal(phase(preview('launch', 0).now(10000)), 'active');
-  assert.equal(preview('zero', 0).payload.runs.length, 0);
-  for (const mode of ['example', 'ahead', 'behind', 'milestones', 'complete', 'final']) validate(preview(mode, 0).payload);
+  assert.equal(preview('zero', 0).payload.dave.runs.length, 0);
+  for (const mode of ['example', 'ahead', 'behind', 'milestones', 'complete', 'final']) validate(preview(mode, 0).payload.dave);
+});
+
+test('runner progress and milestones are independent and use the individual goal', () => {
+  const dave = stats([run('d',1,100)], '2026-12-03', 100);
+  const kate = stats([run('k',2,25)], '2026-12-03', 100);
+  assert.equal(dave.percent, 100);
+  assert.equal(kate.percent, 25);
+  assert.equal(kate.remaining, 75);
+  assert.equal(dave.milestones.filter(Boolean).length, 4);
+  assert.equal(kate.milestones.filter(Boolean).length, 1);
+  assert.equal(stats([run('k',2,100)], '2026-12-03', 125).remaining, 25);
 });

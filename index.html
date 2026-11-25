@@ -4,15 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10151C">
-  <meta name="description" content="Follow Running From Responsibilities, a 150 km running challenge in December 2026.">
+  <meta name="description" content="Follow Running From Responsibilities, two individual 100 km running challenges in December 2026.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Running From Responsibilities">
-  <meta property="og:description" content="150 km. 31 days. Zero valid excuses. Follow the December 2026 running challenge.">
+  <meta property="og:description" content="31 days. 100 km each. Zero valid excuses. Follow the December 2026 running challenge.">
   <meta name="twitter:card" content="summary">
   <title>Running From Responsibilities | December 2026</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
   <script src="./model.js" defer></script>
+  <script src="./supabase-config.js" defer></script>
+  <script src="./data.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -37,30 +39,30 @@
         </div>
         <p class="eyebrow"><span></span> THE STARTING LINE AWAITS</p>
         <h1 id="landing-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1>
-        <p class="tagline">150 km. 31 days. Zero valid excuses.</p>
+        <p class="tagline">31 days. 100 km each. Zero valid excuses.</p>
         <div class="landing-clock">
           <h2>Countdown to kickoff</h2>
           <div id="launch-clock" class="clock"></div>
           <p>The journey begins 1 December 2026.</p>
         </div>
-        <div class="actions" data-share></div>
       </div>
       <div class="brief">
-        <div><span data-icon="target"></span><div><strong>150 <small>km</small></strong><span>Challenge target</span></div></div>
-        <div><span data-icon="calendar"></span><div><strong>31 <small>days</small></strong><span>Challenge duration</span></div></div>
-        <div><span data-icon="activity"></span><div><strong>4.84 <small>km</small></strong><span>Initial daily target</span></div></div>
+        <div data-runner="dave"><span data-icon="target"></span><div><strong>Dave</strong><span>100 km goal · 3.23 km/day</span></div></div>
+        <div data-runner="kate"><span data-icon="target"></span><div><strong>Kate</strong><span>100 km goal · 3.23 km/day</span></div></div>
       </div>
     </section>
     <section id="dashboard" hidden aria-labelledby="dashboard-title">
-      <div class="dash-head"><div><p class="eyebrow"><span></span> 1–31 DECEMBER · SYDNEY</p><h1 id="dashboard-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1><p class="tagline">150 km. 31 days. Zero valid excuses.</p></div><div class="actions" data-share></div></div>
+      <div class="dash-head"><div><p class="eyebrow"><span></span> 1–31 DECEMBER · SYDNEY</p><h1 id="dashboard-title">RUNNING FROM <em>RESPONSIBILITIES</em></h1><p class="tagline">31 days. 100 km each. Zero valid excuses.</p></div></div>
       <p id="announcement" class="notice" role="status" hidden></p>
       <div id="dash-clock" class="panel dash-clock"><h2 id="finish-title">Time to the finish</h2><div id="finish-clock" class="clock"></div></div>
       <div id="data-status" aria-live="polite"></div>
-      <div id="results"></div>
+      <div id="results" class="runner-grid">
+        <section data-runner="dave" aria-labelledby="dave-title"><h2 id="dave-title" class="runner-name">Dave</h2><div class="runner-results"></div></section>
+        <section data-runner="kate" aria-labelledby="kate-title"><h2 id="kate-title" class="runner-name">Kate</h2><div class="runner-results"></div></section>
+      </div>
     </section>
-    <p id="share-status" class="sr-only" role="status"></p>
   </main>
-  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p><span>AUSTRALIA/SYDNEY</span></footer>
+  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p><nav aria-label="Private run logging"><a href="./dave/log/">Dave’s run log</a><a href="./kate/log/">Kate’s run log</a></nav></footer>
   <dialog id="day-dialog"><div id="day-details"></div><form method="dialog"><button class="button">Close</button></form></dialog>
   <div id="confetti" aria-hidden="true"></div>
 </body>

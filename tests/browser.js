@@ -46,6 +46,20 @@ async function frame(path, width, verify, html) {
 }
 const text = (doc,selector) => doc.querySelector(selector)?.textContent || '';
 const dash = (doc,word) => expect(text(doc,'#results').includes(word),'Missing ' + word);
+
+const project = new URL('../',location.href);
+const mock = {
+  user:null, rows:[], writes:0, requests:0, failRead:false, interruptInsert:false, ids:[]
+};
+window.rfrMock = mock;
+async function connected(path,width,verify) {
+  const url = new URL(path,project);
+  const source = await (await fetch(url)).text();
+  const setup = '<base href="' + url.href + '"><script src="' +
+    new URL('tests/supabase-fixture.js',project).href + '"></script>';
+  await frame('',width,verify,source.replace('<head>','<head>' + setup)
+    .replace(/<script src="[^"]*supabase-config.js" defer><\/script>/,''));
+}
 async function main() {
   const tests = [];
   const source = await (await fetch('./model.test.cjs')).text();
@@ -55,67 +69,137 @@ async function main() {
     '../model.js':M
   })[name]);
   for (const [label,fn] of tests) await check(label,fn);
-  await check('Production JSON passes validation',async () => {
-    const json = await (await fetch('../runs.json')).json();
-    M.validate(json);
-  });
-  await check('Desktop prelaunch and advancing countdown',() => frame('../?preview=pre',1280,async doc => {
+
+  await check('Desktop countdown and removal of sharing controls',() => frame('../?preview=pre',1280,async doc => {
     expect(!doc.querySelector('#landing').hidden && doc.querySelector('#dashboard').hidden);
+    expect(!/Share challenge|Copy website link/.test(doc.body.textContent));
+    expect(text(doc,'#landing .tagline') === '31 days. 100 km each. Zero valid excuses.');
+    expect(doc.querySelectorAll('.brief [data-runner]').length === 2);
     const seconds = text(doc,'#launch-clock div:last-child strong');
     await until(() => text(doc,'#launch-clock div:last-child strong') !== seconds);
     expect(doc.documentElement.scrollWidth <= 1280,'Desktop landing overflows');
   }));
-  await check('Open tab automatically launches at simulated Sydney midnight',() => frame('../?preview=launch',390,async doc => {
+  await check('Open tab launches both 100 km dashboards at Sydney midnight',() => frame('../?preview=launch',390,async doc => {
     expect(!doc.querySelector('#landing').hidden);
-    await until(() => !doc.querySelector('#dashboard').hidden);
+    await until(() => doc.querySelectorAll('.ring-text').length === 2);
     expect(doc.querySelector('#landing').hidden);
     expect(text(doc,'#announcement') === 'THE CHALLENGE HAS BEGUN!');
-    dash(doc,'0% complete');
+    for (const ring of doc.querySelectorAll('.ring-text')) expect(ring.textContent.includes('of 100 km0%'));
   }));
-  const scenarios = {
-    zero:'No runs recorded yet',ahead:'Ahead of target',behind:'Behind target',
-    milestones:'Halfway to Freedom',complete:'RESPONSIBILITIES SUCCESSFULLY AVOIDED!',final:'Challenge ended'
-  };
-  for (const [mode, word] of Object.entries(scenarios)) {
-    await check('Dashboard scenario · ' + mode,() => frame('../?preview=' + mode,1280, doc => {
-      dash(doc,word);
-      expect(doc.documentElement.scrollWidth <= 1280,'Desktop dashboard overflows');
-      if (mode === 'milestones') expect(doc.querySelectorAll('.badge.unlocked').length === 3);
-      if (mode === 'complete' || mode === 'final') expect(doc.querySelector('.ring-value').getAttribute('stroke-dashoffset') === '0');
-      if (mode === 'final') expect(doc.querySelector('#finish-clock').hidden && text(doc,'.trophy').includes('SUCCESSFULLY'));
-    }));
-  }
-  await check('320 px mobile layout, calendar day details and chart controls',() => frame('../?preview=example',320, (doc,win) => {
+  await check('Desktop dashboards are side by side and milestones unlock independently',() => frame('../?preview=complete',1280,(doc,win) => {
+    const dave = doc.querySelector('#results [data-runner="dave"]');
+    const kate = doc.querySelector('#results [data-runner="kate"]');
+    expect(dave.getBoundingClientRect().right < kate.getBoundingClientRect().left);
+    expect(dave.querySelectorAll('.badge.unlocked').length === 4 && kate.querySelectorAll('.badge.unlocked').length === 3);
+    expect(dave.querySelector('.trophy') && !kate.querySelector('.trophy'));
+    expect(win.getComputedStyle(kate.querySelector('.ring-value')).stroke === 'rgb(213, 155, 255)');
+  }));
+  await check('320 px mobile dashboards stack; chart and calendar controls work',() => frame('../?preview=example',320,(doc,win) => {
     expect(doc.documentElement.scrollWidth <= 320,'Mobile dashboard overflows');
-    expect(doc.querySelectorAll('.calendar .day').length === 31);
-    doc.querySelector('[data-day="0"]').click();
+    const [dave,kate] = doc.querySelectorAll('#results [data-runner]');
+    expect(dave.getBoundingClientRect().bottom < kate.getBoundingClientRect().top);
+    expect(doc.querySelectorAll('.calendar .day').length === 62);
+    expect(text(dave,'.ring-text') !== text(kate,'.ring-text'));
+    kate.querySelector('[data-day="0"]').click();
     expect(doc.querySelector('#day-dialog').open);
+    expect(text(doc,'#day-title').startsWith('Kate'));
     expect(doc.querySelectorAll('#day-details li').length === 2);
     doc.querySelector('#day-dialog').close();
-    doc.querySelector('.chart-hit button').click();
-    expect(text(doc,'.chart-tooltip').includes('1 Dec'));
-    const picker = doc.querySelector('.chart-picker input');
+    const picker = kate.querySelector('.chart-picker input');
     picker.value = '13';
     picker.dispatchEvent(new win.Event('input'));
-    expect(text(doc,'.chart-tooltip').includes('13 Dec'));
+    expect(text(kate,'.chart-tooltip').includes('13 Dec'));
   }));
-  await check('Repository-relative data loading, cache bypass, failure and retry',async () => {
-    const base = new URL('/running-from-responsibilities/',location.href);
-    const source = await (await fetch(base)).text();
-    const setup = '<base href="' + base.href + '"><script>' +
-      'Date.now = () => Date.parse("2026-12-01T01:00:00+11:00");' +
-      'window.attempts=[];const nativeFetch=window.fetch;' +
-      'window.fetch=(u,o)=>{attempts.push([u.href,o.cache]);return attempts.length===1?Promise.resolve({ok:false,status:503}):nativeFetch(u,o)};' +
-      '</script>';
-    await frame('',390,async (doc, win) => {
+  await check('Database failure shows an error without inventing zero totals, then recovers',async () => {
+    mock.failRead = true;
+    await connected('./',390,async doc => {
       await until(() => doc.querySelector('#retry'));
-      expect(!text(doc,'#results').includes('0 km'));
-      expect(win.attempts[0][0].includes('/running-from-responsibilities/runs.json?v='));
-      expect(win.attempts[0][1] === 'no-store');
+      expect(!doc.querySelector('.ring-text'));
+      mock.failRead = false;
       doc.querySelector('#retry').click();
-      await until(() => doc.querySelector('.ring-text'));
-      expect(win.attempts.length === 2);
-    }, source.replace('<head>','<head>' + setup));
+      await until(() => doc.querySelectorAll('.ring-text').length === 2);
+    });
+  });
+  await check('Dave logs in, sees Sydney date, and saves with network-safe duplicate prevention',() => connected('dave/log/',320,async (doc,win) => {
+    await until(() => !doc.querySelector('#login').hidden);
+    expect(doc.documentElement.scrollWidth <= 320,'Login page overflows');
+    const login = doc.querySelector('#login');
+    login.elements.email.value = 'dave@example.invalid';
+    login.elements.password.value = 'wrong';
+    login.requestSubmit();
+    await until(() => text(doc,'#log-status').includes('Could not sign in'));
+    login.elements.password.value = 'test-only';
+    login.requestSubmit();
+    await until(() => !doc.querySelector('#log-workspace').hidden);
+    const form = doc.querySelector('#run-form');
+    expect(form.elements.date.value === '2026-12-01');
+    form.elements.distance.value = '5';
+    form.elements.minutes.value = '25';
+    form.elements.minutes.dispatchEvent(new win.Event('input',{bubbles:true}));
+    expect(text(doc,'#estimated-pace') === '5:00 /km');
+    mock.interruptInsert = true;
+    form.requestSubmit();
+    form.requestSubmit();
+    await until(() => text(doc,'#form-status').includes('Could not confirm'));
+    form.requestSubmit();
+    await until(() => text(doc,'#form-status') === 'Run saved.');
+    expect(mock.rows.length === 1 && mock.writes === 1 && mock.ids.length === 2 && mock.ids[0] === mock.ids[1]);
+    await until(() => doc.querySelectorAll('#run-list li').length === 1);
+    form.elements.distance.value = '2';
+    form.requestSubmit();
+    await until(() => doc.querySelectorAll('#run-list li').length === 2);
+    expect(mock.rows.every(row => row.run_date === '2026-12-01' && row.participant === 'dave'));
+  }));
+  await check('Remembered login, edit, delete confirmation, and synchronized public data',() => connected('dave/log/',390,async doc => {
+    await until(() => doc.querySelectorAll('#run-list li').length === 2);
+    doc.querySelector('#run-list button').click();
+    const form = doc.querySelector('#run-form');
+    expect(text(doc,'#form-title') === 'Edit run');
+    form.elements.distance.value = '3';
+    form.requestSubmit();
+    await until(() => text(doc,'#run-list').includes('3 km'));
+    doc.querySelector('#run-list li button:last-child').click();
+    const dialog = doc.querySelector('#delete-dialog');
+    expect(dialog.open);
+    dialog.close('cancel');
+    await pause(100);
+    expect(mock.rows.length === 2);
+    doc.querySelector('#run-list li button:last-child').click();
+    dialog.close('delete');
+    await until(() => doc.querySelectorAll('#run-list li').length === 1);
+    expect(text(doc,'#delete-status') === 'Run deleted.');
+    await connected('./',850,async dashDoc => {
+      await until(() => dashDoc.querySelectorAll('.ring-text').length === 2);
+      expect(text(dashDoc,'[data-runner="dave"] .ring-text strong') === '5 km');
+      expect(text(dashDoc,'[data-runner="kate"] .ring-text strong') === '0 km');
+      mock.rows[0].distance_km = 6;
+      const signal = new BroadcastChannel('rfr-runs-changed');
+      signal.postMessage('changed');
+      signal.close();
+      await until(() => text(dashDoc,'[data-runner="dave"] .ring-text strong') === '6 km');
+    });
+  }));
+  await check('Wrong-account route is blocked; Kate can sign in and Dave route then blocks Kate',async () => {
+    await connected('kate/log/',390,async doc => {
+      await until(() => text(doc,'#log-status').includes('cannot access'));
+      expect(doc.querySelector('#log-workspace').hidden);
+      doc.querySelector('#logout').click();
+      await until(() => !doc.querySelector('#login').hidden);
+      const login = doc.querySelector('#login');
+      login.elements.email.value = 'kate@example.invalid';
+      login.elements.password.value = 'test-only';
+      login.requestSubmit();
+      await until(() => !doc.querySelector('#log-workspace').hidden);
+      const form = doc.querySelector('#run-form');
+      form.elements.distance.value = '8';
+      form.requestSubmit();
+      await until(() => text(doc,'#form-status') === 'Run saved.');
+      expect(mock.rows.some(row => row.participant === 'kate' && row.distance_km === 8));
+    });
+    await connected('dave/log/',390,async doc => {
+      await until(() => text(doc,'#log-status').includes('cannot access'));
+      expect(doc.querySelector('#log-workspace').hidden);
+    });
   });
 }
 main().catch(error => result('Browser harness',error)).finally(() => {

@@ -6,7 +6,12 @@ $types = @{
     '/styles.css' = 'text/css; charset=utf-8'
     '/model.js' = 'text/javascript; charset=utf-8'
     '/app.js' = 'text/javascript; charset=utf-8'
-    '/runs.json' = 'application/json; charset=utf-8'
+    '/log.js' = 'text/javascript; charset=utf-8'
+    '/data.js' = 'text/javascript; charset=utf-8'
+    '/supabase-config.js' = 'text/javascript; charset=utf-8'
+    '/dave/log/index.html' = 'text/html; charset=utf-8'
+    '/kate/log/index.html' = 'text/html; charset=utf-8'
+    '/tests/supabase-fixture.js' = 'text/javascript; charset=utf-8'
     '/assets/favicon.svg' = 'image/svg+xml'
     '/tests/browser.html' = 'text/html; charset=utf-8'
     '/tests/browser.js' = 'text/javascript; charset=utf-8'
@@ -29,7 +34,7 @@ try {
             if ($path.StartsWith('/running-from-responsibilities/')) {
                 $path = $path.Substring('/running-from-responsibilities'.Length)
             }
-            if ($path -eq '/') { $path = '/index.html' }
+            if ($path.EndsWith('/')) { $path += 'index.html' }
             if ($types.ContainsKey($path)) {
                 $status = '200 OK'
                 $content = [IO.File]::ReadAllBytes((Join-Path $root $path.TrimStart('/')))

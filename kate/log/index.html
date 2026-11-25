@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#10151C">
+  <title>Kate’s run log | Running From Responsibilities</title>
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../styles.css">
+  <script src="../../model.js" defer></script>
+  <script src="../../supabase-config.js" defer></script>
+  <script src="../../data.js" defer></script>
+  <script src="../../log.js" defer></script>
+</head>
+<body data-runner="kate">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-head shell">
+    <a class="brand" href="../../"><span class="brand-icon" aria-hidden="true">↯</span><span>RUNNING FROM<br>RESPONSIBILITIES</span></a>
+    <a href="../../">Public dashboard</a>
+  </header>
+  <main class="shell log-layout" id="main">
+    <h1>Kate’s run log</h1>
+    <noscript><p class="notice">Enable JavaScript to sign in and record runs.</p></noscript>
+    <p id="log-status" class="notice" role="status">Checking your session…</p>
+    <button id="retry-log" class="button" type="button" hidden>Retry connection</button>
+    <form id="login" class="panel log-form" hidden>
+      <h2>Sign in</h2>
+      <label>Email <input name="email" type="email" required autocomplete="username"></label>
+      <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="button primary" type="submit">Sign in</button>
+    </form>
+    <button id="logout" class="button" type="button" hidden>Log out</button>
+    <div id="log-workspace" hidden>
+      <form id="run-form" class="panel log-form">
+        <h2 id="form-title">Add a run</h2>
+        <label>Run date (Sydney) <input name="date" type="date" required min="2026-12-01" max="2026-12-31"></label>
+        <label>Distance (km) <input name="distance" type="number" inputmode="decimal" required min="0.001" max="1000" step="0.001"></label>
+        <fieldset><legend>Duration (optional)</legend>
+          <div class="duration-fields">
+            <label>Hours <input name="hours" type="number" inputmode="numeric" min="0" max="99" step="1" placeholder="0"></label>
+            <label>Minutes <input name="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="0"></label>
+            <label>Seconds <input name="seconds" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="0"></label>
+          </div>
+        </fieldset>
+        <label>Elevation gain (m, optional) <input name="elevation" type="number" inputmode="numeric" min="0" max="100000" step="1"></label>
+        <p class="pace-output">Average pace <output id="estimated-pace">—</output></p>
+        <p class="muted log-visibility">Saving publishes the date, distance, and any duration or elevation to the public dashboard.</p>
+        <div class="form-actions"><button id="save" class="button primary" type="submit">Save Run</button><button id="cancel-edit" type="button" class="button" hidden>Cancel edit</button></div>
+        <p id="form-status" class="form-status" role="status"></p>
+      </form>
+      <section class="panel log-history" aria-labelledby="history-title">
+        <h2 id="history-title">Previous runs</h2>
+        <p id="history-status" role="status"></p>
+        <button id="reload-runs" class="button" type="button" hidden>Reload runs</button>
+        <ul id="run-list" class="activity"></ul>
+      </section>
+    </div>
+  </main>
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <h2 id="delete-title">Delete this run?</h2>
+    <p id="delete-description"></p>
+    <form method="dialog" class="form-actions"><button class="button" value="cancel" autofocus>Cancel</button><button class="button danger" value="delete">Delete run</button></form>
+  </dialog>
+  <footer class="site-foot shell"><p>Because running is cheaper than therapy.</p></footer>
+</body>
+</html>
