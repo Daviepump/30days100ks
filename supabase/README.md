@@ -25,3 +25,7 @@ Local verification uses simulated browser data and an isolated PostgreSQL instan
 ## Participant visibility
 
 Run [visibility.sql](visibility.sql) once in the SQL Editor after Stage 3. If your Data API exposes entities individually, expose `rfr_set_visibility` with its SQL grants intact. The administrator portal then shows **Visible / Hidden**. Hiding a runner excludes their profile and runs from public reads and leaves their records and access links in place. Existing participants start visible.
+
+## Challenge launch
+
+Run [launch-window.sql](launch-window.sql) once in the SQL Editor after Stage 3. It excludes runs saved before midnight on 1 December 2026 Sydney time from the public dashboard and rejects new entries and date changes before launch or for future Sydney dates. The private run log also hides rehearsal entries. Administrators can still view and delete those entries. The existing Edge Function, runner links and sessions require no changes.
