@@ -1,6 +1,6 @@
 (() => {
   const mock=parent.rfrMock;
-  Date.now=() => Date.parse('2026-12-01T01:00:00+11:00');
+  Date.now=() => mock.now ?? Date.parse('2026-12-01T01:00:00+11:00');
   globalThis.RunningSupabaseConfig={url:'https://test.supabase.co',publishableKey:'sb_publishable_fake'};
   const profiles=[['dave','Dave','#B9F94B'],['kate','Kate','#D59BFF'],['ada','Ada','#93C5FD']]
     .map(([participant,display_name,accent])=>({participant,display_name,accent,goal_km:100,active:true,visible:true,display_order:10,runs:[]}));
@@ -21,8 +21,9 @@
     if (mock.revoked || payload.session!=='local-simulated-session') return answer(403,null,{code:'denied'});
     if (payload.action==='participant.list') return answer(200,{...profiles[0],runs:mock.records});
     if (payload.action==='participant.save') {
-      const row={...payload,updated_at:new Date().toISOString()};
-      const index=mock.records.findIndex(item=>item.id===row.id);
+      const index=mock.records.findIndex(item=>item.id===payload.id);
+      const timestamp=new Date(Date.now()).toISOString();
+      const row={...payload,created_at:mock.records[index]?.created_at ?? timestamp,updated_at:timestamp};
       if (index<0) mock.records.push(row); else mock.records[index]=row;
       return answer(200,row);
     }

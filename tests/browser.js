@@ -113,12 +113,23 @@ async function main() {
     });
   });
   await check('Private logging adds, edits and deletes; revoked sessions lose access',async () => {
+    rfrMock.now=M.start-1;
+    rfrMock.records=[{id:'rehearsal',run_date:'2026-12-02',distance_km:5.25,
+      created_at:new Date(M.start-1).toISOString()}];
     sessionStorage.setItem('rfr-participant-session','local-simulated-session');
     await connected('log/',320,async doc => {
       await until(() => !doc.getElementById('log-workspace').hidden);
       expect(!doc.querySelector('input[type=password]'));
       const form=doc.getElementById('run-form');
+      expect(form.hidden && !doc.getElementById('run-opening').hidden);
+      expect(!doc.querySelector('#run-list li'));
+      rfrMock.now=M.start;
+      await until(() => !form.hidden);
       expect(form.elements.date.value==='2026-12-01');
+      form.elements.date.value='2026-12-02';
+      expect(form.elements.date.validity.rangeOverflow);
+      expect(!doc.querySelector('#run-list li'));
+      form.elements.date.value='2026-12-01';
       form.elements.distance.value='5';
       form.elements.minutes.value='25';
       form.requestSubmit();
@@ -136,6 +147,7 @@ async function main() {
       await until(() => doc.getElementById('log-workspace').hidden);
     });
     expect(!sessionStorage.getItem('rfr-participant-session'));
+    delete rfrMock.now;
   });
   await check('Admin denies a non-admin, then creates a participant and shows a fragment link',async () => {
     rfrMock.admin='non-admin';
