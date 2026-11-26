@@ -47,11 +47,23 @@
     $('estimated-pace').textContent = distance > 0 && seconds() > 0 ? pace(distance,seconds()) : '—';
   }
 
+  function updateRunWindow() {
+    const today = M.sydneyDay(Date.now());
+    const beforeStart = today < M.config.startDate;
+    const justOpened = form.hidden && !beforeStart;
+    $('run-opening').hidden = !beforeStart;
+    form.hidden = beforeStart;
+    fields.date.max = today < M.config.endDate ? today : M.config.endDate;
+    if (justOpened) fields.date.value = fields.date.max;
+    return !beforeStart;
+  }
+
   function resetForm() {
     editing = null;
     draftId = null;
     form.reset();
-    fields.date.value = M.sydneyDay(Date.now());
+    updateRunWindow();
+    fields.date.value = form.hidden ? fields.date.min : fields.date.max;
     $('form-title').textContent = 'Add a run';
     $('save').textContent = 'Save Run';
     $('cancel-edit').hidden = true;
@@ -116,6 +128,10 @@
 
   const request = async (action,values = {}) => (await RunningData.edge('participant.'+action,{...values,session})).data;
 
+  function challengeRuns(profile) {
+    return profile.runs.filter(run => Date.parse(run.created_at) >= M.start).map(RunningData.normalize);
+  }
+
   async function refreshRuns() {
     if (!canWrite) return;
     const current = generation;
@@ -124,7 +140,7 @@
     $('history-status').textContent = 'Loading runs…';
     try {
       const profile = await request('list');
-      const latest = profile.runs.map(RunningData.normalize);
+      const latest = challengeRuns(profile);
       if (current !== generation || fetchId !== readId) return;
       runs = latest;
       renderRuns();
@@ -192,7 +208,7 @@
   form.addEventListener('input',showPace);
   form.addEventListener('submit',event => {
     event.preventDefault();
-    if (busy || !canWrite || !form.reportValidity()) return;
+    if (busy || !canWrite || !updateRunWindow() || !form.reportValidity()) return;
     const duration = seconds();
     const enteredDuration = [fields.hours,fields.minutes,fields.seconds].some(input => input.value !== '');
     if (!duration && enteredDuration) {
@@ -250,10 +266,11 @@
       sessionStorage.setItem(sessionKey,session);
       $('log-title').textContent = profile.display_name + '’s run log';
       document.body.style.setProperty('--accent',profile.accent);
-      runs = profile.runs.map(RunningData.normalize);
+      runs = challengeRuns(profile);
       renderRuns();
       $('history-status').textContent = runs.length ? '' : 'No runs logged yet.';
       canWrite = true;
+      updateRunWindow();
       $('log-workspace').hidden = false;
       $('logout').hidden = false;
       status('');
@@ -271,6 +288,8 @@
     }
   }
   $('retry-log').onclick = connect;
+  window.addEventListener('focus',updateRunWindow);
+  setInterval(updateRunWindow,1000);
   resetForm();
   connect();
 })();
